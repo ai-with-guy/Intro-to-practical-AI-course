@@ -1,0 +1,15 @@
+[project]
+name = "intel-ai-course"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "jupyter>=1.1.1",
+    "matplotlib>=3.11.0",
+    "pandas>=3.0.3",
+    "pandas-stubs~=3.0.3",
+    "scikit-learn>=1.9.0",
+    "torch>=2.13.0",
+    "torchvision>=0.28.0",
+]
