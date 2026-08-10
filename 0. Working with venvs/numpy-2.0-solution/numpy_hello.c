@@ -14,13 +14,13 @@
 static PyObject *hello(PyObject *self, PyObject *args) {
 #ifdef __GLIBC__
     PySys_WriteStdout(
-        "Good job! You built and imported the NumPy 2.x extension. "
-        "It was built for glibc %d.%d; found glibc %s.\n",
+        "The NumPy 2.x extension is working. It was built for glibc %d.%d; "
+        "found glibc %s.\n",
         __GLIBC__, __GLIBC_MINOR__, gnu_get_libc_version());
 #else
     PySys_WriteStdout(
-        "Good job! You built and imported the NumPy 2.x extension. "
-        "It was built for a non-glibc C library.\n");
+        "The NumPy 2.x extension is working. It was built for a non-glibc "
+        "C library.\n");
 #endif
     Py_RETURN_NONE;
 }

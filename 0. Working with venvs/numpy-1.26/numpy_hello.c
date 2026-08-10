@@ -2,13 +2,25 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <Python.h>
 #include <numpy/arrayobject.h>
+#ifdef __GLIBC__
+#include <gnu/libc-version.h>
+#endif
 
 #if NPY_ABI_VERSION >= 0x02000000
 #error "Wrong NumPy ABI: build this project with NumPy 1.x"
 #endif
 
 static PyObject *hello(PyObject *self, PyObject *args) {
-    PySys_WriteStdout("Good job! You built and imported the NumPy 1.x extension.\n");
+#ifdef __GLIBC__
+    PySys_WriteStdout(
+        "Good job! You built and imported the NumPy 1.x extension. "
+        "It was built for glibc %d.%d; found glibc %s.\n",
+        __GLIBC__, __GLIBC_MINOR__, gnu_get_libc_version());
+#else
+    PySys_WriteStdout(
+        "Good job! You built and imported the NumPy 1.x extension. "
+        "It was built for a non-glibc C library.\n");
+#endif
     Py_RETURN_NONE;
 }
 

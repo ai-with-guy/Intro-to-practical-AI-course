@@ -1,0 +1,5 @@
+.venv/
+build.py
+numpy_hello.c
+numpy_hello*.so
+requirements.txt
