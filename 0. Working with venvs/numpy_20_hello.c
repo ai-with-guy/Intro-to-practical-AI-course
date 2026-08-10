@@ -14,13 +14,13 @@
 static PyObject *hello(PyObject *self, PyObject *args) {
 #ifdef __GLIBC__
     PySys_WriteStdout(
-        "The NumPy 2.x extension is working. It was built for glibc %d.%d; "
-        "found glibc %s.\n",
+        "Good job! You built and imported the NumPy 2.0 extension. "
+        "It was built for glibc %d.%d; found glibc %s.\n",
         __GLIBC__, __GLIBC_MINOR__, gnu_get_libc_version());
 #else
     PySys_WriteStdout(
-        "The NumPy 2.x extension is working. It was built for a non-glibc "
-        "C library.\n");
+        "Good job! You built and imported the NumPy 2.0 extension. "
+        "It was built for a non-glibc C library.\n");
 #endif
     Py_RETURN_NONE;
 }
@@ -32,13 +32,13 @@ static PyMethodDef methods[] = {
 
 static struct PyModuleDef module = {
     PyModuleDef_HEAD_INIT,
-    "numpy_hello",
+    "numpy_20_hello",
     "A tiny extension built against the NumPy 2.x C ABI.",
     -1,
     methods,
 };
 
-PyMODINIT_FUNC PyInit_numpy_hello(void) {
+PyMODINIT_FUNC PyInit_numpy_20_hello(void) {
     import_array();
     return PyModule_Create(&module);
 }
