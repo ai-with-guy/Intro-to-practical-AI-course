@@ -22,6 +22,10 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+#added
+*/__pycache__/
+
+
 # Virtual Environments & uv
 .venv/
 venv/
@@ -30,10 +34,22 @@ ENV/
 env.bak/
 venv.bak/
 
+#added
+*/.venv/
+*/venv/
+*/env/
+*/ENV/
+*/env.bak/
+*/venv.bak/
+
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
 *-checkpoint.ipynb
 .virtual_documents/
+
+#added
+*/.ipynb_checkpoints
+*/.virtual_documents/
 
 # IDEs and Editors (PyCharm, VS Code, Vim)
 .idea/

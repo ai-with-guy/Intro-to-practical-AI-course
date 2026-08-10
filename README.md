@@ -3,56 +3,37 @@
 [![Python](https://img.shields.io/badge/Python-3.14%2B-blue.svg)](https://www.python.org/)
 [![Package Manager: uv](https://img.shields.io/badge/package--manager-uv-7f52ff.svg)](https://github.com/astral-sh/uv)
 [![Jupyter](https://img.shields.io/badge/Jupyter-Lab-orange.svg)](https://jupyter.org/)
+[Env Manager: micromamba](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html)
 
-Hands-on practical Artificial Intelligence and Data Science course repository powered by `uv` and Jupyter.
+
+This workshop covers many practical concepts for ML software engineering in the real world.
+It is intended for advance students who have already mastered python.
+For all leasons but leason 0 we assume basic competency with virtual enviorments. 
 
 ---
 
-## ⚡ Quick Start
-
 ### 1. Prerequisites
-Install `uv` (fast Python package manager):
+We will be using `uv` as our prefered package manager. 
+If you are competent with something else thats fine. But some of the util scripts wont work.
+
+To install `uv` you can:
 
 **Linux / macOS:**
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+or
 
 **Windows (PowerShell):**
 ```powershell
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-### 2. Launch the Workshop Notebook
-
-#### Linux / macOS:
+or if you are using conda/micromamba you can simply
 ```bash
-./launch.sh
+micromamba install uv
 ```
 
-#### Windows:
-```cmd
-launch.bat
-```
+and it will be added to your venv similar to how pip works
 
-#### Manual Start:
-```bash
-uv run jupyter lab "Making sense of Big Data/Workshop1.ipynb"
-```
 
-Running the launcher script automatically boots up Jupyter Lab with `Workshop1.ipynb` open and ready to run.
-
----
-
-## 📂 Project Structure
-
-```text
-Intro-to-practical-AI-course/
-├── launch.sh                     # Linux/macOS launcher
-├── launch.bat                    # Windows launcher
-├── src/                          # Course materials and reference notebooks
-└── Making sense of Big Data/     # Workshop directory
-    ├── Workshop1.ipynb           # Main interactive workshop notebook
-    ├── utils.py                  # Exercise validation helper functions
-    └── titanic.csv               # Practical exercise dataset
-```

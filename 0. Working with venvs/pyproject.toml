@@ -1,0 +1,8 @@
+[project]
+name = "working-with-venvs"
+version = "0.1.0"
+description = "Lesson 0 of the Intro to Practical AI course"
+requires-python = "==3.14.0"
+dependencies = [
+    "jupyter>=1.1.1"
+]
