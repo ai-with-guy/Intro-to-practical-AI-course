@@ -1,3 +1,3 @@
 @echo off
 echo Launching your local Jupyter environment via uv...
-uv run jupyter lab "Pandas_Exercise.ipynb"
+uv run jupyter lab "Data_Fundamentals_Workshop.ipynb"
