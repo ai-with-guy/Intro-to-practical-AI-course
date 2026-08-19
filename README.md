@@ -1,3 +1,6 @@
+# THIS IS EXPIRIMENTAL
+a lot of the thigns here are half made sketched made by a mix of ourselves or AI
+
 # Intro to Practical AI Course 🤖📊
 
 [![Python](https://img.shields.io/badge/Python-3.14%2B-blue.svg)](https://www.python.org/)
