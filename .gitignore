@@ -79,3 +79,7 @@ tmp/
 # Downloaded course datasets
 1. Making sense of Big Data/LLCP2022.XPT
 4. Computer Vision/data/
+
+# Generated Transformer training assets (compressed copies are tracked)
+5. Transformer/tinystories_transformer.pt
+5. Transformer/tinystories_tokenizer.json
