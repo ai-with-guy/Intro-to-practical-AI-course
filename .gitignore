@@ -83,3 +83,13 @@ tmp/
 # Generated Transformer training assets (compressed copies are tracked)
 5. Transformer/tinystories_transformer.pt
 5. Transformer/tinystories_tokenizer.json
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary/journal files generated during active connections
+*.db-journal
+*.db-wal
+*.db-shm
