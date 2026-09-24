@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+echo "Launching your local Jupyter environment via uv..."
+uv run --exact jupyter lab "openvino_workflow.ipynb"
