@@ -34,6 +34,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local environment variables
+.env
+.env.*
+!.env.example
+
 #added
 */.venv/
 */venv/
@@ -50,6 +55,18 @@ venv.bak/
 #added
 */.ipynb_checkpoints
 */.virtual_documents/
+
+# Python tooling caches and reports
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
 
 # IDEs and Editors (PyCharm, VS Code, Vim)
 .idea/

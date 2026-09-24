@@ -14,8 +14,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-cuda = ["torch>=2.5,<3"]
-xpu = ["torch>=2.5,<3"]
+cuda = [
+    "torch>=2.5,<3",
+    "torchvision>=0.20,<1",
+]
+xpu = [
+    "torch>=2.5,<3",
+    "torchvision>=0.20,<1",
+]
 
 [tool.uv]
 package = false
@@ -29,6 +35,10 @@ conflicts = [
 
 [tool.uv.sources]
 torch = [
+    { index = "pypi-torch", extra = "cuda" },
+    { index = "pytorch-xpu", extra = "xpu" },
+]
+torchvision = [
     { index = "pypi-torch", extra = "cuda" },
     { index = "pytorch-xpu", extra = "xpu" },
 ]
