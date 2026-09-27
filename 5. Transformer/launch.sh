@@ -23,4 +23,4 @@ if [[ "$(uname -s)" == "Linux" ]]; then
     fi
 fi
 
-uv run --exact --extra "$torch_extra" jupyter lab "transformer.ipynb"
+uv run --exact --extra "$torch_extra" jupyter lab "yelp_bert_classifier.ipynb"
