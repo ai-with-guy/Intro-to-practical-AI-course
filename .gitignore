@@ -102,3 +102,7 @@ tmp/
 5. Transformer/tinystories_tokenizer.json
 5. Transformer/legacy/tinystories_transformer.pt
 5. Transformer/legacy/tinystories_tokenizer.json
+
+# Regenerable Yelp tokenization caches (including notebooks in legacy/)
+5. Transformer/**/yelp_bert_pruned_tokenizer_len512_rare5/train_tokens/
+5. Transformer/**/yelp_bert_pruned_tokenizer_len512_rare5/test_tokens/
