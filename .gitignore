@@ -100,3 +100,5 @@ tmp/
 # Generated Transformer training assets (compressed copies are tracked)
 5. Transformer/tinystories_transformer.pt
 5. Transformer/tinystories_tokenizer.json
+5. Transformer/legacy/tinystories_transformer.pt
+5. Transformer/legacy/tinystories_tokenizer.json
