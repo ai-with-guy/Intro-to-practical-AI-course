@@ -28,8 +28,14 @@ def head_view(
 
         Args:
             For self-attention models:
-                attention: list of ``torch.FloatTensor``(one for each layer) of shape
-                    ``(batch_size(must be 1), num_heads, sequence_length, sequence_length)``
+                attention: attention weights as a single tensor/NumPy array or a list
+                    of layers. Each layer accepts ``(sequence_length, sequence_length)``
+                    for simple attention, ``(num_heads, sequence_length, sequence_length)``,
+                    or ``(1, num_heads, sequence_length, sequence_length)``.
+                    A nested Python list representing a matrix also works. Missing
+                    layer/head axes are treated as one layer/head. For simple attention
+                    with a batch larger than one, select a sample first (e.g. scores[0]).
+                    Pass softmax attention weights, not raw query-key logits.
                 tokens: list of tokens
                 sentence_b_start: index of first wordpiece in sentence B if input text is sentence pair (optional)
             For encoder-decoder models:
@@ -42,6 +48,8 @@ def head_view(
                 encoder_tokens: list of tokens for encoder input
                 decoder_tokens: list of tokens for decoder input
             For all models:
+                The same per-layer formats are accepted for encoder/decoder/cross
+                attention; cross-attention may have different query and key lengths.
                 prettify_tokens: indicates whether to remove special characters in wordpieces, e.g. Ġ
                 layer: index (zero-based) of initial selected layer in visualization. Defaults to layer 0.
                 heads: Indices (zero-based) of initial selected heads in visualization. Defaults to all heads.
@@ -222,7 +230,8 @@ def head_view(
     params_js = json.dumps(params).replace('<', '\\u003c')
     document = (f'<script>{jquery}</script><script>{d3}</script>'
                 f'{vis_html}<script>window.BERTVIZ_PARAMS = {params_js};\n{vis_js}</script>')
-    height = max(400, int(max(len(tokens or []), 12) * 23 + 90))
+    token_count = max(max(len(d['left_text']), len(d['right_text'])) for d in attn_data)
+    height = max(400, int(max(token_count, 12) * 23 + 90))
     iframe = (f'<iframe title="BertViz head view" sandbox="allow-scripts" '
               f'style="width:100%;height:{height}px;border:0" '
               f'srcdoc="{escape(document, quote=True)}"></iframe>')
