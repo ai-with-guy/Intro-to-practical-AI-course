@@ -98,11 +98,11 @@ tmp/
 4. Computer Vision/data/
 
 # Generated Transformer training assets (compressed copies are tracked)
-5. Transformer/tinystories_transformer.pt
-5. Transformer/tinystories_tokenizer.json
-5. Transformer/legacy/tinystories_transformer.pt
-5. Transformer/legacy/tinystories_tokenizer.json
+5. Transformer/data/models/tinystories_transformer.pt
+5. Transformer/data/tokenizers/tinystories_tokenizer.json
+5. Transformer/data/cache/
+5. Transformer/data/datasets/
 
 # Regenerable Yelp tokenization caches (including notebooks in legacy/)
-5. Transformer/**/yelp_bert_pruned_tokenizer_len512_rare5/train_tokens/
-5. Transformer/**/yelp_bert_pruned_tokenizer_len512_rare5/test_tokens/
+5. Transformer/data/tokenizers/yelp_bert_pruned_tokenizer_len*/train_tokens/
+5. Transformer/data/tokenizers/yelp_bert_pruned_tokenizer_len*/test_tokens/

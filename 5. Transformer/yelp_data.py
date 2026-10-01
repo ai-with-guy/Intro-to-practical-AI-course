@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from datasets import load_dataset, load_from_disk
+from datasets import load_from_disk
 from tokenizers import Tokenizer
 from tokenizers.decoders import WordPiece as WordPieceDecoder
 from tokenizers.models import WordPiece
@@ -11,6 +11,8 @@ from tokenizers.pre_tokenizers import BertPreTokenizer
 from tokenizers.processors import TemplateProcessing
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, PreTrainedTokenizerFast
+
+from data_paths import HF_MODELS_CACHE, TOKENIZERS_DIR, load_yelp_dataset
 
 
 def _tokenize_split(split, tokenizer, max_len, batch_size):
@@ -24,7 +26,9 @@ def _tokenize_split(split, tokenizer, max_len, batch_size):
 
 
 def _build_pruned_tokenizer(train, directory, max_len, rare_token_limit, batch_size):
-    original = AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=True)
+    original = AutoTokenizer.from_pretrained(
+        "bert-base-uncased", use_fast=True, cache_dir=str(HF_MODELS_CACHE)
+    )
 
     def encode(batch):
         ids = original(batch["text"], truncation=True,
@@ -67,7 +71,7 @@ def _build_pruned_tokenizer(train, directory, max_len, rare_token_limit, batch_s
 def load_yelp_data(max_len=512, rare_token_limit=5, batch_size=32,
                    tokenize_batch_size=2048, directory=None):
     if directory is None:
-        directory = Path(__file__).resolve().parent / "legacy" / (
+        directory = TOKENIZERS_DIR / (
             f"yelp_bert_pruned_tokenizer_len{max_len}_rare{rare_token_limit}"
         )
     directory = Path(directory)
@@ -76,7 +80,7 @@ def load_yelp_data(max_len=512, rare_token_limit=5, batch_size=32,
     if (directory / "tokenizer.json").is_file():
         tokenizer = AutoTokenizer.from_pretrained(directory, use_fast=True)
     else:
-        dataset = load_dataset("ajay232/yelp_polarity")
+        dataset = load_yelp_dataset()
         tokenizer = _build_pruned_tokenizer(
             dataset["train"], directory, max_len, rare_token_limit, tokenize_batch_size
         )
@@ -86,7 +90,7 @@ def load_yelp_data(max_len=512, rare_token_limit=5, batch_size=32,
         test_tokens = load_from_disk(str(test_cache))
     else:
         if "dataset" not in locals():
-            dataset = load_dataset("ajay232/yelp_polarity")
+            dataset = load_yelp_dataset()
         train_tokens = _tokenize_split(dataset["train"], tokenizer, max_len, tokenize_batch_size)
         test_tokens = _tokenize_split(dataset["test"], tokenizer, max_len, tokenize_batch_size)
         if not train_cache.exists():

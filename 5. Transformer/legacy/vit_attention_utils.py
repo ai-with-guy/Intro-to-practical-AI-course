@@ -31,7 +31,7 @@ HEATMAP_RENDER_OPTIONS = {
     "Grayscale": "grayscale",
     "Color": "color",
 }
-ASSET_DIR = Path(__file__).resolve().parent / "assets"
+ASSET_DIR = Path(__file__).resolve().parent.parent / "data" / "images"
 # Validation images from Imagenette, the 10-class subset of ImageNet.
 IMAGENET_EXAMPLES = {
     "Parachute": ASSET_DIR / "parachute.jpeg",
