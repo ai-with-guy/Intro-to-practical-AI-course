@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
+# Make the shared attention viewer available to Jupyter and its kernels.
+viewer_path="$(cd -- '../5. Transformer' && pwd)"
+export PYTHONPATH="$viewer_path${PYTHONPATH:+:$PYTHONPATH}"
 
 echo "Launching your local Jupyter environment via uv..."
 torch_extra="${TORCH_EXTRA:-cuda}"

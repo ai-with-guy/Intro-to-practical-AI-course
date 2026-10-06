@@ -1,4 +1,11 @@
 @echo off
+setlocal
+cd /d "%~dp0"
+if defined PYTHONPATH (
+    set "PYTHONPATH=%~dp0;%PYTHONPATH%"
+) else (
+    set "PYTHONPATH=%~dp0"
+)
 echo Launching your local Jupyter environment via uv...
 
 set "TORCH_EXTRA=cuda"

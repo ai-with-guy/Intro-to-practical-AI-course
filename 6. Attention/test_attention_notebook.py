@@ -3,7 +3,9 @@
 import html
 import json
 from pathlib import Path
+import sys
 import unittest
+from unittest.mock import patch
 
 import nbformat
 import torch
@@ -47,7 +49,10 @@ class AttentionNotebookTests(unittest.TestCase):
             'tokenizer': SyntheticTokenizer(), 'device': torch.device('cpu'),
         }
         setup = next(c for c in cls.notebook.cells if 'setup' in c.metadata.get('tags', []))
-        exec(setup.source, cls.namespace)
+        # Launchers supply this path to real Jupyter kernels. Keep it out of the notebook.
+        viewer_path = str(NOTEBOOK.parent.parent / '5. Transformer')
+        with patch.object(sys, 'path', [viewer_path, *sys.path]):
+            exec(setup.source, cls.namespace)
         cls.namespace['device'] = torch.device('cpu')
         function = next(c for c in cls.notebook.cells
                         if 'translation-function' in c.metadata.get('tags', []))
@@ -126,6 +131,18 @@ class AttentionNotebookTests(unittest.TestCase):
         self.assertEqual(params['attention'][2]['left_text'], example['decoder_tokens'])
         self.assertEqual(params['attention'][2]['right_text'], example['encoder_tokens'])
         self.assertIn('<iframe', rendered.data)
+
+    def test_generation_view_replays_the_recorded_predictions(self):
+        rendered = self.namespace['generation_view'](self.example, heads=[0], html_action='return')
+        document = html.unescape(rendered.data)
+        payload = document.split('window.BERTVIZ_PARAMS = ', 1)[1].split(';\n', 1)[0]
+        params = json.loads(payload)
+        self.assertEqual(params['generation_tokens'], self.example['predicted_tokens'])
+        self.assertEqual(params['default_filter'], '2')
+        self.assertIn('title="Generation replay"', document)
+        self.assertIn('id="generation-next"', document)
+        cell = next(c for c in self.notebook.cells if 'generation-view' in c.metadata.get('tags', []))
+        self.assertIn('generation_view(german_example', cell.source)
 
 
 if __name__ == '__main__':

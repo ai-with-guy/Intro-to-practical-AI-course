@@ -16,6 +16,22 @@ Use **Animate flow** to stop/start motion. Animation starts disabled for users
 with reduced-motion preferences. At most 300 of the strongest active connections
 get dots to keep long sequences responsive; all attention lines are still drawn.
 
+## Generation replay
+
+```python
+from bertviz_local import generation_view
+generation_view(example, layer=0, heads=[0])
+```
+
+`example` is the dictionary produced by lesson 6's `inspect_translation`, with
+encoder/decoder tokens, `predicted_tokens`, and decoder/cross attention. The viewer
+replays **read prefix → predict next token → append token**, with manual steps,
+playback, reset, and a slider. Decoder self-attention is cropped to the available
+prefix; cross-attention retains every encoder token. The final query is highlighted.
+This is a replay of recorded greedy generation, not live inference or token
+probabilities. Predictions must align with decoder inputs shifted by one position;
+the last appended token was not read in the recording and has no query row.
+
 ## Custom model attention
 
 Pass attention weights after softmax, with rows representing query tokens and

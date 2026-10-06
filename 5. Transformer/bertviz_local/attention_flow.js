@@ -45,6 +45,9 @@
         config.nLayers = config.attention[config.filter]['attn'].length;
         config.nHeads = config.attention[config.filter]['attn'][0].length;
         config.layers = params['include_layers']
+        config.generationStep = 0;
+        config.generationPhase = 0; // Read prefix, predict next token, append token.
+        config.playTimer = null;
         config.animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         $(`#${config.rootDivId} #animate-flow`).prop('checked', config.animate)
             .on('change', function (e) {
@@ -82,17 +85,122 @@
             }
             renderVis();
         });
+        if (params.generation_tokens) initializeGeneration();
+    }
+
+    function initializeGeneration() {
+        const root = $(`#${config.rootDivId}`);
+        root.find('#generation-step').attr('max', params.generation_tokens.length - 1)
+            .on('input', function (e) {
+                stopPlayback();
+                config.generationStep = +e.currentTarget.value;
+                config.generationPhase = 0;
+                renderVis();
+            });
+        root.find('#generation-next').on('click', function () {
+            stopPlayback();
+            advanceGeneration();
+        });
+        root.find('#generation-back').on('click', function () {
+            stopPlayback();
+            if (config.generationPhase > 0) config.generationPhase--;
+            else if (config.generationStep > 0) {
+                config.generationStep--;
+                config.generationPhase = 2;
+            }
+            renderVis();
+        });
+        root.find('#generation-reset').on('click', function () {
+            stopPlayback();
+            config.generationStep = 0;
+            config.generationPhase = 0;
+            renderVis();
+        });
+        root.find('#generation-play').on('click', function () {
+            if (config.playTimer !== null) stopPlayback();
+            else {
+                if (generationFinished()) {
+                    config.generationStep = 0;
+                    config.generationPhase = 0;
+                }
+                config.playTimer = window.setInterval(advanceGeneration, 1000);
+                root.find('#generation-play').text('Pause');
+                renderVis();
+            }
+        });
+        window.addEventListener('pagehide', stopPlayback);
+    }
+
+    function generationFinished() {
+        return config.generationStep === params.generation_tokens.length - 1 && config.generationPhase === 2;
+    }
+
+    function stopPlayback() {
+        if (config.playTimer !== null) window.clearInterval(config.playTimer);
+        config.playTimer = null;
+        $(`#${config.rootDivId} #generation-play`).text('Play');
+    }
+
+    function advanceGeneration() {
+        if (generationFinished()) {
+            stopPlayback();
+            return;
+        }
+        if (config.generationPhase < 2) config.generationPhase++;
+        else {
+            config.generationStep++;
+            config.generationPhase = 0;
+        }
+        if (generationFinished()) stopPlayback();
+        renderVis();
+    }
+
+    function renderGeneration() {
+        const root = $(`#${config.rootDivId}`);
+        const decoder = config.attention.find(d => d.name === 'Cross' || d.name === 'Decoder');
+        const prefix = decoder.left_text.slice(0, config.generationStep + 1);
+        const next = params.generation_tokens[config.generationStep];
+        if (config.generationPhase === 2) prefix.push(next);
+        const stream = root.find('#generation-stream').empty();
+        prefix.forEach((token, i) => $('<span />').text(token).css({
+            display: 'inline-block', padding: '4px 7px', margin: '2px', borderRadius: '4px',
+            background: i === prefix.length - 1 ? '#c9e3ff' : '#e3e8ef', fontFamily: 'monospace'
+        }).appendTo(stream));
+        const phases = ['Read prefix → attend to available tokens',
+                        'Predict the next token from the final query',
+                        'Append the prediction to the decoder stream'];
+        root.find('#generation-status').text(`Step ${config.generationStep + 1}/${params.generation_tokens.length}: ${phases[config.generationPhase]}`);
+        root.find('#generation-prediction').text(config.generationPhase === 0
+            ? 'Next token: not revealed yet'
+            : config.generationPhase === 1 ? `Next token: ${next}`
+            : generationFinished() ? `Appended ${next}. End of recorded generation (EOS or token limit).`
+            : `Appended ${next}. Next: read the extended prefix to predict again.`);
+        root.find('#generation-step').val(config.generationStep);
+        root.find('#generation-next').prop('disabled', generationFinished());
+        root.find('#generation-back').prop('disabled', config.generationStep === 0 && config.generationPhase === 0);
     }
 
     function renderVis() {
 
         // Load parameters
         const attnData = config.attention[config.filter];
-        const leftText = attnData.left_text;
-        const rightText = attnData.right_text;
+        let leftText = attnData.left_text;
+        let rightText = attnData.right_text;
 
         // Select attention for given layer
-        const layerAttention = attnData.attn[config.layer_seq];
+        let layerAttention = attnData.attn[config.layer_seq];
+        if (params.generation_tokens) {
+            renderGeneration();
+            const prefixLength = config.generationStep + 1;
+            if (attnData.name === 'Cross' || attnData.name === 'Decoder') {
+                leftText = leftText.slice(0, prefixLength);
+                layerAttention = layerAttention.map(head => head.slice(0, prefixLength));
+            }
+            if (attnData.name === 'Decoder') {
+                rightText = rightText.slice(0, prefixLength);
+                layerAttention = layerAttention.map(head => head.map(row => row.slice(0, prefixLength)));
+            }
+        }
 
         // Clear vis
         $(`#${config.rootDivId} #vis`).empty();
@@ -119,6 +227,17 @@
         labels.forEach((label, i) => svg.append('text')
             .attr('x', i ? MATRIX_WIDTH + BOXWIDTH : 0)
             .attr('y', 43).attr('font-size', '11px').attr('fill', '#555').text(label));
+        focusGeneration(svg);
+    }
+
+    function focusGeneration(svg) {
+        if (!params.generation_tokens || config.attention[config.filter].name === 'Encoder') return;
+        // Only the final available query predicts the next token at this step.
+        svg.select('#attention').attr('visibility', 'hidden');
+        svg.selectAll(`.attentionEdge[left-token-index='${config.generationStep}']`)
+            .attr('visibility', 'visible');
+        svg.select('#left').selectAll('.background')
+            .style('opacity', (d, i) => i === config.generationStep ? 0.5 : 0);
     }
 
     function renderText(svg, text, isLeft, attention, leftPos) {
@@ -250,6 +369,7 @@
                 .selectAll("g")
                 .selectAll("rect")
                 .style("opacity", 0.0);
+            focusGeneration(svg);
         });
     }
 
@@ -327,7 +447,10 @@
             if (config.headVis[head] && weight > 0) edges.push({node: this, weight, head});
         });
         // Bound animated elements for long sequences; all attention lines remain.
-        edges.sort((a, b) => b.weight - a.weight);
+        const isCurrentQuery = edge => params.generation_tokens
+            && config.attention[config.filter].name !== 'Encoder'
+            && +edge.node.getAttribute('left-token-index') === config.generationStep;
+        edges.sort((a, b) => Number(isCurrentQuery(b)) - Number(isCurrentQuery(a)) || b.weight - a.weight);
         edges.slice(0, MAX_FLOW_DOTS).forEach(({node, weight, head}, i) => {
             const line = node.querySelector('line');
             const x1 = line.getAttribute('x1'), y1 = line.getAttribute('y1');

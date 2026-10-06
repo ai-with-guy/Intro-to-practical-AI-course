@@ -22,7 +22,8 @@ def head_view(
         encoder_tokens=None,
         decoder_tokens=None,
         include_layers=None,
-        html_action='view'
+        html_action='view',
+        generation_tokens=None
 ):
     """Render the attention-flow view (BertViz-compatible API).
 
@@ -58,6 +59,8 @@ def head_view(
                 html_action: Specifies the action to be performed with the generated HTML object
                     - 'view' (default): Displays the generated HTML representation as a notebook cell output
                     - 'return' : Returns an HTML object containing the generated view for further processing or custom visualization
+                generation_tokens: Optional next-token predictions aligned with decoder_tokens.
+                    Enables a generation replay; normally use generation_view(example).
     """
 
     attn_data = []
@@ -174,6 +177,14 @@ def head_view(
     if layer is not None and layer not in include_layers:
         raise ValueError(f"Layer {layer} is not in include_layers: {include_layers}")
 
+    if generation_tokens is not None:
+        if decoder_tokens is None or not any(d['name'] in ('Cross', 'Decoder') for d in attn_data):
+            raise ValueError('Generation replay requires decoder tokens and cross or decoder attention.')
+        if not generation_tokens or len(generation_tokens) != len(decoder_tokens):
+            raise ValueError('Generation predictions must match the number of decoder query tokens.')
+        if list(decoder_tokens[1:]) != list(generation_tokens[:-1]):
+            raise ValueError('Decoder tokens must be the start token followed by the previous predictions.')
+
     # Generate unique div id to enable multiple visualizations in one notebook
     vis_id = 'bertviz-%s'%(uuid.uuid4().hex)
 
@@ -189,8 +200,24 @@ def head_view(
         select_html = f'Attention: <select id="filter">{options}</select>'
     else:
         select_html = ""
+    generation_html = ""
+    if generation_tokens is not None:
+        generation_html = """
+            <section style="margin:12px 0;padding:10px;background:#f4f7fb;border-radius:8px">
+                <button id="generation-back" type="button">Back</button>
+                <button id="generation-next" type="button">Next</button>
+                <button id="generation-play" type="button">Play</button>
+                <button id="generation-reset" type="button">Reset</button>
+                <label>Step <input id="generation-step" type="range" min="0" value="0"></label>
+                <div id="generation-status" aria-live="polite" style="margin:8px 0"></div>
+                <div>Decoder stream (start token + generated prefix):</div>
+                <div id="generation-stream" style="max-height:64px;overflow:auto;padding:6px 0"></div>
+                <div id="generation-prediction" style="min-height:24px"></div>
+            </section>
+        """
     vis_html = f"""      
         <div id="{vis_id}" style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;">
+            {generation_html}
             <span style="user-select:none">
                 Layer: <select id="layer"></select>
                 {select_html}
@@ -228,6 +255,9 @@ def head_view(
         'heads': heads,
         'include_layers': include_layers
     }
+    if generation_tokens is not None:
+        params['generation_tokens'] = (format_special_chars(generation_tokens)
+                                       if prettify_tokens else list(generation_tokens))
 
     # Run the UI in its own document so JupyterLab does not need to
     # execute Javascript outputs or provide a global AMD/require.js loader.
@@ -240,7 +270,10 @@ def head_view(
                 f'{vis_html}<script>window.BERTVIZ_PARAMS = {params_js};\n{vis_js}</script>')
     token_count = max(max(len(d['left_text']), len(d['right_text'])) for d in attn_data)
     height = max(400, int(max(token_count, 12) * 23 + 125))
-    iframe = (f'<iframe title="Attention flow view" sandbox="allow-scripts" '
+    if generation_tokens is not None:
+        height += 230
+    title = 'Generation replay' if generation_tokens is not None else 'Attention flow view'
+    iframe = (f'<iframe title="{title}" sandbox="allow-scripts" '
               f'style="width:100%;height:{height}px;border:0" '
               f'srcdoc="{escape(document, quote=True)}"></iframe>')
     with warnings.catch_warnings():

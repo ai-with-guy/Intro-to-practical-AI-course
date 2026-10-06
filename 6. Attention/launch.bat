@@ -1,6 +1,13 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+rem Make the shared attention viewer available to Jupyter and its kernels.
+for %%I in ("%~dp0..\5. Transformer") do set "VIEWER_PATH=%%~fI"
+if defined PYTHONPATH (
+    set "PYTHONPATH=%VIEWER_PATH%;%PYTHONPATH%"
+) else (
+    set "PYTHONPATH=%VIEWER_PATH%"
+)
 echo Launching your local Jupyter environment via uv...
 
 if not defined TORCH_EXTRA (

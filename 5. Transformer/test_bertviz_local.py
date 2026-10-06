@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 import torch
 
-from bertviz_local import head_view
+from bertviz_local import head_view, generation_view
 
 
 def view_params(**kwargs):
@@ -95,6 +95,26 @@ class CustomAttentionViewTests(unittest.TestCase):
         self.assertIn('id="animate-flow"', document)
         self.assertIn("dot.append('animateMotion')", document)
         self.assertIn('prefers-reduced-motion', document)
+
+    def test_generation_view_keeps_the_query_prediction_shift(self):
+        example = dict(encoder_tokens=self.tokens, decoder_tokens=['<pad>', 'hello'],
+                       predicted_tokens=['hello', '</s>'], cross_attention=self.weights,
+                       decoder_attention=torch.tensor([[1., 0.], [.3, .7]]))
+        rendered = generation_view(example, heads=[0], html_action='return')
+        document = html.unescape(rendered.data)
+        payload = document.split('window.BERTVIZ_PARAMS = ', 1)[1].split(';\n', 1)[0]
+        params = json.loads(payload)
+        self.assertEqual(params['generation_tokens'], ['hello', '</s>'])
+        self.assertEqual(params['attention'][1]['left_text'], ['<pad>', 'hello'])
+        self.assertEqual(example['decoder_tokens'], ['<pad>', 'hello'])
+
+    def test_generation_view_rejects_misaligned_predictions(self):
+        arguments = dict(cross_attention=self.weights, encoder_tokens=self.tokens,
+                         decoder_tokens=['<pad>', 'hello'])
+        for predictions, message in (([], 'number'), (['hello'], 'number'),
+                                     (['world', '</s>'], 'previous predictions')):
+            with self.subTest(predictions=predictions), self.assertRaisesRegex(ValueError, message):
+                view_params(**arguments, generation_tokens=predictions)
 
     def test_invalid_inputs_raise_useful_errors(self):
         cases = [

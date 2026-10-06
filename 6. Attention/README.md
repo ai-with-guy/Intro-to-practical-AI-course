@@ -40,6 +40,19 @@ Keep both lesson directories together. The same iframe-based rendering and
 local JavaScript assets used in lesson 5 are used here; no frontend CDN is needed.
 The upstream and bundled-library licenses remain in lesson 5.
 
+Both launchers set `PYTHONPATH` before starting Jupyter, so the notebook uses a
+plain import. If you see `No module named 'bertviz_local'`, stop the old Jupyter
+server and launch again with `launch.bat` / `launch.sh`; restarting only its kernel
+does not update the server's inherited environment.
+
+### Generation replay
+
+`generation_view(german_example, layer=3, heads=[2])` shows **read → predict →
+append** one token at a time, with Next/Back, Play/Pause, Reset, and a step slider.
+Decoder attention is cropped to the current prefix; cross-attention keeps the
+full source. The latest query is highlighted. This uses recorded generation and
+attention, without rerunning the model. The Python function defaults are unchanged.
+
 ## Checks
 
 From this directory:
