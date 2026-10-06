@@ -65,6 +65,37 @@ class CustomAttentionViewTests(unittest.TestCase):
         self.assertEqual(params['attention'][0]['left_text'], self.tokens)
         self.assertEqual(params['attention'][0]['right_text'], ['a', 'b', 'c'])
 
+    def test_cross_attention_is_default_for_every_available_combination(self):
+        for encoder, decoder in ((False, False), (True, False), (False, True), (True, True)):
+            with self.subTest(encoder=encoder, decoder=decoder):
+                arguments = dict(cross_attention=self.weights,
+                                 encoder_tokens=self.tokens, decoder_tokens=self.tokens)
+                if encoder:
+                    arguments['encoder_attention'] = self.weights
+                if decoder:
+                    arguments['decoder_attention'] = self.weights
+                params = view_params(**arguments)
+                self.assertEqual(params['attention'][int(params['default_filter'])]['name'], 'Cross')
+                rendered = html.unescape(head_view(html_action='return', **arguments).data)
+                if encoder or decoder:
+                    self.assertIn(f'<option value="{params["default_filter"]}" selected>Cross</option>',
+                                  rendered)
+
+    def test_without_cross_attention_first_view_remains_default(self):
+        for arguments in (dict(attention=self.weights, tokens=self.tokens),
+                          dict(encoder_attention=self.weights, decoder_attention=self.weights,
+                               encoder_tokens=self.tokens, decoder_tokens=self.tokens)):
+            self.assertEqual(view_params(**arguments)['default_filter'], '0')
+
+    def test_flow_frontend_is_bundled_in_isolated_iframe(self):
+        rendered = head_view(attention=self.weights, tokens=self.tokens, html_action='return')
+        document = html.unescape(rendered.data)
+        self.assertIn('title="Attention flow view"', document)
+        self.assertIn('sandbox="allow-scripts"', document)
+        self.assertIn('id="animate-flow"', document)
+        self.assertIn("dot.append('animateMotion')", document)
+        self.assertIn('prefers-reduced-motion', document)
+
     def test_invalid_inputs_raise_useful_errors(self):
         cases = [
             ({'attention': torch.zeros(2, 1, 2, 2)}, 'batch size'),

@@ -1,7 +1,20 @@
-This is the BertViz 1.4.1 head view (Apache-2.0; see `LICENSE`), kept locally
-with its original controls, token hover behavior, and visualization. It uses
+# Attention flow view
+
+Derived from the BertViz 1.4.1 head view (Apache-2.0; see `LICENSE`), with
+layer/head controls and token hover behavior preserved. It uses
 bundled jQuery/D3 rather than `require.js`, renders in an isolated iframe, and
 accepts attention weights from custom models, including single-head attention.
+
+The frontend is `attention_flow.js`; the Python API stays `bertviz_local.head_view`
+for notebook compatibility. Cross-attention is selected initially whenever supplied.
+Animated dots travel **right to left**, from keys/values being read to queries
+receiving information (encoder to decoder for cross-attention). These show value
+flow, not the opposite direction of a query looking up a key. Brighter dots/lines
+indicate stronger attention. Hover filtering and head selection apply to both.
+
+Use **Animate flow** to stop/start motion. Animation starts disabled for users
+with reduced-motion preferences. At most 300 of the strongest active connections
+get dots to keep long sequences responsive; all attention lines are still drawn.
 
 ## Custom model attention
 

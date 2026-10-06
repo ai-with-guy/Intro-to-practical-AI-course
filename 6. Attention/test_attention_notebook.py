@@ -7,7 +7,9 @@ import unittest
 
 import nbformat
 import torch
-from transformers import BatchEncoding, T5Config, T5ForConditionalGeneration
+from transformers import (
+    BatchEncoding, MarianConfig, MarianMTModel, T5Config, T5ForConditionalGeneration,
+)
 
 
 NOTEBOOK = Path(__file__).with_name('attention.ipynb')
@@ -83,6 +85,32 @@ class AttentionNotebookTests(unittest.TestCase):
             self.inspect('too long')
         with self.assertRaisesRegex(ValueError, 'positive'):
             self.inspect('short method', max_new_tokens=0)
+
+    def test_german_example_with_tiny_marian(self):
+        config = MarianConfig(
+            vocab_size=32, decoder_vocab_size=32, d_model=16,
+            encoder_layers=2, decoder_layers=2,
+            encoder_attention_heads=2, decoder_attention_heads=2,
+            encoder_ffn_dim=32, decoder_ffn_dim=32,
+            decoder_start_token_id=0, pad_token_id=0, eos_token_id=2,
+            forced_eos_token_id=2, attn_implementation='eager',
+        )
+        model = MarianMTModel(config).eval()
+        example = self.inspect(
+            'Ich habe gestern ein Buch gelesen.', max_new_tokens=5,
+            model=model, tokenizer=SyntheticTokenizer())
+        ids = example['generated_ids'][0]
+        self.assertEqual(ids[0].item(), config.decoder_start_token_id)
+        self.assertEqual(ids[-1].item(), config.eos_token_id)
+        self.assertEqual(len(example['decoder_tokens']), len(ids) - 1)
+        self.assertEqual(len(example['predicted_tokens']), len(ids) - 1)
+        for cross, decoder in zip(example['cross_attention'], example['decoder_attention']):
+            self.assertEqual(cross.shape, (1, 2, len(ids) - 1, 5))
+            torch.testing.assert_close(cross.sum(-1), torch.ones_like(cross.sum(-1)))
+            torch.testing.assert_close(decoder.triu(1), torch.zeros_like(decoder))
+            torch.testing.assert_close(decoder[0, :, 0, 0], torch.ones(2))
+        # Explicit model/tokenizer overrides leave the Java example unchanged.
+        self.assertIs(self.namespace['model'], self.model)
 
     def test_shared_bertviz_renders_all_three_attention_types(self):
         example = self.example

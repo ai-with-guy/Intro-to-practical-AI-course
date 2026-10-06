@@ -1,5 +1,5 @@
 /**
- * @fileoverview Transformer Visualization D3 javascript code.
+ * @fileoverview Attention flow view, derived from the BertViz head view.
  *
  *
  *  Based on: https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/visualization/attention.js
@@ -23,7 +23,8 @@
     const BOXHEIGHT = 22.5;
     const MATRIX_WIDTH = 115;
     const CHECKBOX_SIZE = 20;
-    const TEXT_TOP = 30;
+    const TEXT_TOP = 52;
+    const MAX_FLOW_DOTS = 300;
 
     console.log("d3 version", d3.version)
     let headColors;
@@ -44,6 +45,12 @@
         config.nLayers = config.attention[config.filter]['attn'].length;
         config.nHeads = config.attention[config.filter]['attn'][0].length;
         config.layers = params['include_layers']
+        config.animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        $(`#${config.rootDivId} #animate-flow`).prop('checked', config.animate)
+            .on('change', function (e) {
+                config.animate = e.currentTarget.checked;
+                updateAnimation(d3.select(`#${config.rootDivId} #vis svg`));
+            });
 
         if (params['heads']) {
             config.headVis = new Array(config.nHeads).fill(false);
@@ -66,8 +73,13 @@
             renderVis();
         });
 
-        $(`#${config.rootDivId} #filter`).on('change', function (e) {
+        $(`#${config.rootDivId} #filter`).val(config.filter).on('change', function (e) {
             config.filter = e.currentTarget.value;
+            const nHeads = config.attention[config.filter].attn[0].length;
+            if (nHeads !== config.nHeads) {
+                config.nHeads = nHeads;
+                config.headVis = new Array(nHeads).fill(true);
+            }
             renderVis();
         });
     }
@@ -101,6 +113,12 @@
 
         // Draw squares at top of visualization, one for each head
         drawCheckboxes(0, svg, layerAttention);
+        const labels = attnData.name === 'Cross'
+            ? ['Decoder queries (receive)', 'Encoder keys/values (send)']
+            : ['Queries (receive)', 'Keys/values (send)'];
+        labels.forEach((label, i) => svg.append('text')
+            .attr('x', i ? MATRIX_WIDTH + BOXWIDTH : 0)
+            .attr('y', 43).attr('font-size', '11px').attr('fill', '#555').text(label));
     }
 
     function renderText(svg, text, isLeft, attention, leftPos) {
@@ -174,7 +192,7 @@
 
             // Reset visibility attribute for any previously highlighted attention arcs
             svg.select("#attention")
-                .selectAll("line[visibility='visible']")
+                .selectAll(".attentionEdge[visibility='visible']")
                 .attr("visibility", null)
 
             // Hide group containing attention arcs
@@ -182,9 +200,9 @@
 
             // Set to visible appropriate attention arcs to be highlighted
             if (isLeft) {
-                svg.select("#attention").selectAll("line[left-token-index='" + index + "']").attr("visibility", "visible");
+                svg.select("#attention").selectAll(".attentionEdge[left-token-index='" + index + "']").attr("visibility", "visible");
             } else {
-                svg.select("#attention").selectAll("line[right-token-index='" + index + "']").attr("visibility", "visible");
+                svg.select("#attention").selectAll(".attentionEdge[right-token-index='" + index + "']").attr("visibility", "visible");
             }
 
             // Update color boxes superimposed over tokens
@@ -223,7 +241,7 @@
 
             // Reset visibility attributes for previously selected lines
             svg.select("#attention")
-                .selectAll("line[visibility='visible']")
+                .selectAll(".attentionEdge[visibility='visible']")
                 .attr("visibility", null) ;
             svg.select("#attention").attr("visibility", "visible");
 
@@ -255,9 +273,15 @@
             .append("g")
             .classed("tokenAttention", true) // Group attention arcs by left token
             .attr("left-token-index", (d, i) => i)
-            .selectAll("line")
+            .selectAll(".attentionEdge")
             .data(d => d)
             .enter()
+            .append("g")
+            .classed("attentionEdge", true)
+            .attr("left-token-index", function () {
+                return +this.parentNode.getAttribute("left-token-index");
+            })
+            .attr("right-token-index", (d, i) => i)
             .append("line")
             .attr("x1", BOXWIDTH)
             .attr("y1", function () {
@@ -268,7 +292,7 @@
             .attr("y2", (d, rightTokenIndex) => TEXT_TOP + rightTokenIndex * BOXHEIGHT + (BOXHEIGHT / 2))
             .attr("stroke-width", 2)
             .attr("stroke", function () {
-                const headIndex = +this.parentNode.parentNode.getAttribute("head-index");
+                const headIndex = +this.parentNode.parentNode.parentNode.getAttribute("head-index");
                 return headColors(headIndex)
             })
             .attr("left-token-index", function () {
@@ -283,7 +307,7 @@
         svg.select("#attention")
             .selectAll("line")
             .attr("stroke-opacity", function (d) {
-                const headIndex = +this.parentNode.parentNode.getAttribute("head-index");
+                const headIndex = +this.parentNode.parentNode.parentNode.getAttribute("head-index");
                 // If head is selected
                 if (config.headVis[headIndex]) {
                     // Set opacity to attention weight divided by number of active heads
@@ -291,7 +315,42 @@
                 } else {
                     return 0.0;
                 }
-            })
+            });
+        renderFlowDots(svg);
+    }
+
+    function renderFlowDots(svg) {
+        svg.selectAll('.flowDot').remove();
+        const edges = [];
+        svg.selectAll('.attentionEdge').each(function (weight) {
+            const head = +this.parentNode.parentNode.getAttribute('head-index');
+            if (config.headVis[head] && weight > 0) edges.push({node: this, weight, head});
+        });
+        // Bound animated elements for long sequences; all attention lines remain.
+        edges.sort((a, b) => b.weight - a.weight);
+        edges.slice(0, MAX_FLOW_DOTS).forEach(({node, weight, head}, i) => {
+            const line = node.querySelector('line');
+            const x1 = line.getAttribute('x1'), y1 = line.getAttribute('y1');
+            const x2 = line.getAttribute('x2'), y2 = line.getAttribute('y2');
+            const dot = d3.select(node).append('circle').classed('flowDot', true)
+                .attr('r', 2.5).attr('fill', headColors(head))
+                .attr('fill-opacity', Math.min(1, weight * 2 / activeHeads()))
+                .attr('pointer-events', 'none');
+            // Attention rows are queries; values flow from column to row, not vice versa.
+            dot.append('animateMotion')
+                .attr('path', `M ${x2} ${y2} L ${x1} ${y1}`)
+                .attr('dur', '1.8s').attr('begin', `${-(i % 19) * 0.1}s`)
+                .attr('repeatCount', 'indefinite');
+        });
+        updateAnimation(svg);
+    }
+
+    function updateAnimation(svg) {
+        const node = svg.node();
+        if (!node) return;
+        svg.selectAll('.flowDot').style('display', config.animate ? null : 'none');
+        if (config.animate) node.unpauseAnimations();
+        else node.pauseAnimations();
     }
 
     function boxOffsets(i) {

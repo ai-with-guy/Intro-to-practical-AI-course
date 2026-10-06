@@ -3,7 +3,9 @@
 An extension of **5. Transformer**. The first worked example is Java → C#
 translation with `Salesforce/codet5-base-codexglue-translate-java-cs`:
 generate code, inspect cross-attention, then compare encoder and causal decoder
-self-attention. Later attention topics are outlined at the end of the notebook.
+self-attention. A second example translates German → English with
+`Helsinki-NLP/opus-mt-de-en`, using the same viewer and a heatmap labeled with
+decoder queries and next-token predictions.
 
 ## Launch
 
@@ -23,6 +25,9 @@ The translation checkpoint does **not** contain tokenizer files. Internet is
 needed for the first download; subsequent runs use the Hugging Face cache.
 No training or dataset download is required. Generated code is not executed and
 may be wrong—review it as you would any model-generated code.
+
+The German → English section downloads a separate Marian checkpoint (roughly
+300 MB). SentencePiece and Sacremoses are included for its tokenizer.
 
 The notebook also normalizes the base tokenizer's legacy sentinel-token metadata
 for Transformers 5, without changing the vocabulary IDs.

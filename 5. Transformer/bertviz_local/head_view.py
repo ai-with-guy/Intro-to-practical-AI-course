@@ -24,7 +24,7 @@ def head_view(
         include_layers=None,
         html_action='view'
 ):
-    """Render head view
+    """Render the attention-flow view (BertViz-compatible API).
 
         Args:
             For self-attention models:
@@ -177,10 +177,13 @@ def head_view(
     # Generate unique div id to enable multiple visualizations in one notebook
     vis_id = 'bertviz-%s'%(uuid.uuid4().hex)
 
+    # Prefer cross-attention without changing the order of the available views.
+    default_filter = next((i for i, d in enumerate(attn_data) if d['name'] == 'Cross'), 0)
+
     # Compose html
     if len(attn_data) > 1:
         options = '\n'.join(
-            f'<option value="{i}">{attn_data[i]["name"]}</option>'
+            f'<option value="{i}"{" selected" if i == default_filter else ""}>{attn_data[i]["name"]}</option>'
             for i, d in enumerate(attn_data)
         )
         select_html = f'Attention: <select id="filter">{options}</select>'
@@ -191,7 +194,12 @@ def head_view(
             <span style="user-select:none">
                 Layer: <select id="layer"></select>
                 {select_html}
+                <label><input type="checkbox" id="animate-flow"> Animate flow</label>
             </span>
+            <div style="font-size:12px;color:#555;margin-top:6px">
+                Dots carry information from keys/values (right) to queries (left).
+                Stronger attention means brighter lines and dots.
+            </div>
             <div id='vis'></div>
         </div>
     """
@@ -214,25 +222,25 @@ def head_view(
             d['right_text'] = format_special_chars(d['right_text'])
     params = {
         'attention': attn_data,
-        'default_filter': "0",
+        'default_filter': str(default_filter),
         'root_div_id': vis_id,
         'layer': layer,
         'heads': heads,
         'include_layers': include_layers
     }
 
-    # Run the original UI in its own document so JupyterLab does not need to
+    # Run the UI in its own document so JupyterLab does not need to
     # execute Javascript outputs or provide a global AMD/require.js loader.
     assets = Path(__file__).resolve().parent.parent / 'bertviz_assets'
     jquery = (assets / 'jquery.min.js').read_text(encoding='utf-8')
     d3 = (assets / 'd3.min.js').read_text(encoding='utf-8')
-    vis_js = (Path(__file__).resolve().parent / 'head_view.js').read_text(encoding='utf-8')
+    vis_js = (Path(__file__).resolve().parent / 'attention_flow.js').read_text(encoding='utf-8')
     params_js = json.dumps(params).replace('<', '\\u003c')
     document = (f'<script>{jquery}</script><script>{d3}</script>'
                 f'{vis_html}<script>window.BERTVIZ_PARAMS = {params_js};\n{vis_js}</script>')
     token_count = max(max(len(d['left_text']), len(d['right_text'])) for d in attn_data)
-    height = max(400, int(max(token_count, 12) * 23 + 90))
-    iframe = (f'<iframe title="BertViz head view" sandbox="allow-scripts" '
+    height = max(400, int(max(token_count, 12) * 23 + 125))
+    iframe = (f'<iframe title="Attention flow view" sandbox="allow-scripts" '
               f'style="width:100%;height:{height}px;border:0" '
               f'srcdoc="{escape(document, quote=True)}"></iframe>')
     with warnings.catch_warnings():
