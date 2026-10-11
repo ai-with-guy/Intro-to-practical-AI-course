@@ -7,8 +7,9 @@ def generation_view(example, *, layer=None, heads=None, include_layers=None,
                     prettify_tokens=True, html_action='view'):
     """Display an inspect_translation result, without running the model again.
 
-    Each step reads a prefix, reveals its recorded next-token prediction, then
-    appends that token. Decoder attention is cropped to the available prefix;
+    One Next click appends a recorded prediction and updates the extended prefix
+    and attention together, without intermediate animation stages.
+    Decoder attention is cropped to the available prefix;
     cross-attention keeps the full encoder input. The final appended token has
     no query row because it was not fed back into the recorded model pass.
     """

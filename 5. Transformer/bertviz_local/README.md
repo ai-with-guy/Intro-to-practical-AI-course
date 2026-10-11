@@ -25,8 +25,9 @@ generation_view(example, layer=0, heads=[0])
 
 `example` is the dictionary produced by lesson 6's `inspect_translation`, with
 encoder/decoder tokens, `predicted_tokens`, and decoder/cross attention. The viewer
-replays **read prefix → predict next token → append token**, with manual steps,
-playback, reset, and a slider. Decoder self-attention is cropped to the available
+appends one token and updates the prefix and attention together per Next click
+or playback cycle, with no intermediate stages. Back undoes one token;
+reset and a slider are also available. Decoder self-attention is cropped to the available
 prefix; cross-attention retains every encoder token. The final query is highlighted.
 This is a replay of recorded greedy generation, not live inference or token
 probabilities. Predictions must align with decoder inputs shifted by one position;

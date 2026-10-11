@@ -47,20 +47,47 @@ does not update the server's inherited environment.
 
 ### Generation replay
 
-`generation_view(german_example, layer=3, heads=[2])` shows **read → predict →
-append** one token at a time, with Next/Back, Play/Pause, Reset, and a step slider.
+`generation_view(german_example, layer=3, heads=[2])` appends one token and updates
+the prefix and attention together per Next click or playback cycle—no intermediate stages.
+Back undoes one token; Play/Pause, Reset, and a step slider are also available.
 Decoder attention is cropped to the current prefix; cross-attention keeps the
 full source. The latest query is highlighted. This uses recorded generation and
 attention, without rerunning the model. The Python function defaults are unchanged.
+
+## Object detection with DETR
+
+The notebook also includes `facebook/detr-resnet-50`: a CNN image grid feeds a
+transformer encoder, and parallel object queries use decoder self-attention and
+cross-attention to predict classes and boxes. Select a detected box, decoder
+layer, individual head (or mean of heads), and overlay opacity to inspect its
+query's attention over the image. Controls reuse recorded weights; they do not
+rerun the detector. A static plot is included too.
+
+Run the setup cell, then the DETR section (translation is not required). The first
+run downloads the detector (roughly 160 MB) and a COCO sample image. Set
+`IMAGE_PATH` to use a local photo; lower `DETECTION_THRESHOLD` if no boxes survive.
+The input is resized to a 480-pixel short edge, capped at 800 pixels on the long
+edge, to keep attention inspection manageable. The overlay is interpolated from
+the actual CNN feature grid, not a pixel-level mask or causal explanation.
+`detr_attention.py` supplies the reusable inspection and plotting helpers.
+Choose the starting view in code, for example:
+`detection_attention_view(detection_example, detection=3, layer=5, head=2)`.
+`detection` is a zero-based retained box index, not its original query ID;
+`layer=-1` selects the last layer and `head=None` averages heads. Boxes and class
+names are recovered from model predictions and the checkpoint's class-name map,
+not hard-coded for the sample photo.
 
 ## Checks
 
 From this directory:
 
 ```bash
-uv run --extra cuda python -m unittest -v test_attention_notebook
+uv run --extra cuda python -m unittest -v test_attention_notebook test_detr_attention
 ```
 
 Use `--extra xpu` if appropriate. Tests use a tiny randomly initialized T5 and
 a synthetic tokenizer, so they do not download the lesson's model. They check
 generation/replay alignment, cross-attention shapes, masks, and BertViz output.
+DETR checks use a tiny random detector with a local ResNet backbone: no checkpoint
+or image downloads. They verify the spatial grid, query IDs, box postprocessing,
+empty detections, and plotting.

@@ -45,8 +45,7 @@
         config.nLayers = config.attention[config.filter]['attn'].length;
         config.nHeads = config.attention[config.filter]['attn'][0].length;
         config.layers = params['include_layers']
-        config.generationStep = 0;
-        config.generationPhase = 0; // Read prefix, predict next token, append token.
+        config.generationStep = 0; // Number of tokens already appended.
         config.playTimer = null;
         config.animate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         $(`#${config.rootDivId} #animate-flow`).prop('checked', config.animate)
@@ -90,11 +89,10 @@
 
     function initializeGeneration() {
         const root = $(`#${config.rootDivId}`);
-        root.find('#generation-step').attr('max', params.generation_tokens.length - 1)
+        root.find('#generation-step').attr('max', params.generation_tokens.length)
             .on('input', function (e) {
                 stopPlayback();
                 config.generationStep = +e.currentTarget.value;
-                config.generationPhase = 0;
                 renderVis();
             });
         root.find('#generation-next').on('click', function () {
@@ -103,25 +101,23 @@
         });
         root.find('#generation-back').on('click', function () {
             stopPlayback();
-            if (config.generationPhase > 0) config.generationPhase--;
-            else if (config.generationStep > 0) {
-                config.generationStep--;
-                config.generationPhase = 2;
-            }
+            if (config.generationStep > 0) config.generationStep--;
             renderVis();
         });
         root.find('#generation-reset').on('click', function () {
             stopPlayback();
             config.generationStep = 0;
-            config.generationPhase = 0;
             renderVis();
         });
         root.find('#generation-play').on('click', function () {
-            if (config.playTimer !== null) stopPlayback();
+            if (config.playTimer !== null) {
+                stopPlayback();
+                renderVis();
+            }
             else {
+                stopPlayback();
                 if (generationFinished()) {
                     config.generationStep = 0;
-                    config.generationPhase = 0;
                 }
                 config.playTimer = window.setInterval(advanceGeneration, 1000);
                 root.find('#generation-play').text('Pause');
@@ -132,7 +128,7 @@
     }
 
     function generationFinished() {
-        return config.generationStep === params.generation_tokens.length - 1 && config.generationPhase === 2;
+        return config.generationStep === params.generation_tokens.length;
     }
 
     function stopPlayback() {
@@ -146,11 +142,8 @@
             stopPlayback();
             return;
         }
-        if (config.generationPhase < 2) config.generationPhase++;
-        else {
-            config.generationStep++;
-            config.generationPhase = 0;
-        }
+        // Append one token and update the prefix/attention in a single render.
+        config.generationStep++;
         if (generationFinished()) stopPlayback();
         renderVis();
     }
@@ -158,26 +151,21 @@
     function renderGeneration() {
         const root = $(`#${config.rootDivId}`);
         const decoder = config.attention.find(d => d.name === 'Cross' || d.name === 'Decoder');
-        const prefix = decoder.left_text.slice(0, config.generationStep + 1);
-        const next = params.generation_tokens[config.generationStep];
-        if (config.generationPhase === 2) prefix.push(next);
+        const prefix = [decoder.left_text[0], ...params.generation_tokens.slice(0, config.generationStep)];
+        const added = params.generation_tokens[config.generationStep - 1];
         const stream = root.find('#generation-stream').empty();
         prefix.forEach((token, i) => $('<span />').text(token).css({
             display: 'inline-block', padding: '4px 7px', margin: '2px', borderRadius: '4px',
             background: i === prefix.length - 1 ? '#c9e3ff' : '#e3e8ef', fontFamily: 'monospace'
         }).appendTo(stream));
-        const phases = ['Read prefix → attend to available tokens',
-                        'Predict the next token from the final query',
-                        'Append the prediction to the decoder stream'];
-        root.find('#generation-status').text(`Step ${config.generationStep + 1}/${params.generation_tokens.length}: ${phases[config.generationPhase]}`);
-        root.find('#generation-prediction').text(config.generationPhase === 0
-            ? 'Next token: not revealed yet'
-            : config.generationPhase === 1 ? `Next token: ${next}`
-            : generationFinished() ? `Appended ${next}. End of recorded generation (EOS or token limit).`
-            : `Appended ${next}. Next: read the extended prefix to predict again.`);
+        root.find('#generation-status').text(`Generated ${config.generationStep}/${params.generation_tokens.length} tokens`);
+        root.find('#generation-prediction').text(config.generationStep === 0
+            ? 'The start token is ready. Next adds the first prediction.'
+            : generationFinished() ? `Added ${added}. End of recorded generation (EOS or token limit).`
+            : `Added ${added}. The extended prefix is ready to predict the next token.`);
         root.find('#generation-step').val(config.generationStep);
         root.find('#generation-next').prop('disabled', generationFinished());
-        root.find('#generation-back').prop('disabled', config.generationStep === 0 && config.generationPhase === 0);
+        root.find('#generation-back').prop('disabled', config.generationStep === 0);
     }
 
     function renderVis() {
@@ -191,7 +179,7 @@
         let layerAttention = attnData.attn[config.layer_seq];
         if (params.generation_tokens) {
             renderGeneration();
-            const prefixLength = config.generationStep + 1;
+            const prefixLength = Math.min(config.generationStep + 1, params.generation_tokens.length);
             if (attnData.name === 'Cross' || attnData.name === 'Decoder') {
                 leftText = leftText.slice(0, prefixLength);
                 layerAttention = layerAttention.map(head => head.slice(0, prefixLength));
@@ -234,10 +222,11 @@
         if (!params.generation_tokens || config.attention[config.filter].name === 'Encoder') return;
         // Only the final available query predicts the next token at this step.
         svg.select('#attention').attr('visibility', 'hidden');
-        svg.selectAll(`.attentionEdge[left-token-index='${config.generationStep}']`)
+        const queryIndex = Math.min(config.generationStep, params.generation_tokens.length - 1);
+        svg.selectAll(`.attentionEdge[left-token-index='${queryIndex}']`)
             .attr('visibility', 'visible');
         svg.select('#left').selectAll('.background')
-            .style('opacity', (d, i) => i === config.generationStep ? 0.5 : 0);
+            .style('opacity', (d, i) => i === queryIndex ? 0.5 : 0);
     }
 
     function renderText(svg, text, isLeft, attention, leftPos) {
@@ -449,7 +438,7 @@
         // Bound animated elements for long sequences; all attention lines remain.
         const isCurrentQuery = edge => params.generation_tokens
             && config.attention[config.filter].name !== 'Encoder'
-            && +edge.node.getAttribute('left-token-index') === config.generationStep;
+            && +edge.node.getAttribute('left-token-index') === Math.min(config.generationStep, params.generation_tokens.length - 1);
         edges.sort((a, b) => Number(isCurrentQuery(b)) - Number(isCurrentQuery(a)) || b.weight - a.weight);
         edges.slice(0, MAX_FLOW_DOTS).forEach(({node, weight, head}, i) => {
             const line = node.querySelector('line');
