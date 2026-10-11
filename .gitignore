@@ -106,3 +106,13 @@ tmp/
 # Regenerable Yelp tokenization caches (including notebooks in legacy/)
 5. Transformer/data/tokenizers/yelp_bert_pruned_tokenizer_len*/train_tokens/
 5. Transformer/data/tokenizers/yelp_bert_pruned_tokenizer_len*/test_tokens/
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary/journal files generated during active connections
+*.db-journal
+*.db-wal
+*.db-shm
