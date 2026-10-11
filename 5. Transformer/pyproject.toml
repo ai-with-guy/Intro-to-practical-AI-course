@@ -11,11 +11,20 @@ dependencies = [
     "tqdm>=4.70.0",
     "datasets>=5.0.1",
     "tokenizers>=0.23.1",
+    "transformers>=5,<6",
+    "ipyevents>=2.0.2",
+    "ipywidgets>=8.1.5",
 ]
 
 [project.optional-dependencies]
-cuda = ["torch>=2.5,<3"]
-xpu = ["torch>=2.5,<3"]
+cuda = [
+    "torch>=2.5,<3",
+    "torchvision>=0.20,<1",
+]
+xpu = [
+    "torch>=2.5,<3",
+    "torchvision>=0.20,<1",
+]
 
 [tool.uv]
 package = false
@@ -29,6 +38,10 @@ conflicts = [
 
 [tool.uv.sources]
 torch = [
+    { index = "pypi-torch", extra = "cuda" },
+    { index = "pytorch-xpu", extra = "xpu" },
+]
+torchvision = [
     { index = "pypi-torch", extra = "cuda" },
     { index = "pytorch-xpu", extra = "xpu" },
 ]
