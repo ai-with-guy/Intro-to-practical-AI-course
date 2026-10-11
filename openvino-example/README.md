@@ -1,10 +1,12 @@
-# OpenVINO multi-model workflow
+# OpenVINO face search
 
-This notebook processes a video, detects people, finds and compares their faces, and runs gesture recognition only for the matched person. Models and sample media are downloaded into `models/` and `data/` on the first run.
+This beginner-friendly notebook searches a video for a reference face using just two models: face detection and face embeddings. There is no body detection or gesture recognition. Models and sample media are downloaded into `models/` and `data/` on the first run.
 
-The included Open Model Zoo classroom video provides a small crowd demonstration. Set `INPUT_VIDEO` and `REFERENCE_IMAGE` in the notebook to use your own video and target photo.
+Run `openvino_workflow.ipynb` from top to bottom. The included classroom video provides a ready-to-run demo; a face from its opening frames becomes the reference. Set `INPUT_VIDEO` and `REFERENCE_IMAGE` to use your own video and target photo, with permission from the people involved.
 
-The notebook keeps model preprocessing and predictions separate from presentation. `video_utils.py` handles video reading/writing, image loading, and drawing generic boxes and labels; it imports only OpenCV and has no model or matching logic. `predict_frame` returns prediction data, `predict_gesture` classifies the rolling clip, and a separate presentation cell converts their results into overlays.
+The core search is a short `search_faces` function: **detect → crop → embed → compare**. Face crops are embedded in one model batch, and `embeddings @ reference_vector` compares all faces at once. The notebook explains preprocessing and cosine similarity step by step. `video_utils.py` keeps video I/O and drawing out of the model code.
+
+Green boxes indicate similarity above `MATCH_THRESHOLD`; gray boxes indicate scores below it. Scores are not identity probabilities. The annotated video is saved to `data/openvino_result.webm`. Simple face crops keep the lesson short, but real identity applications need alignment, threshold calibration, testing, and privacy safeguards.
 
 #### Linux / macOS:
 ```bash
