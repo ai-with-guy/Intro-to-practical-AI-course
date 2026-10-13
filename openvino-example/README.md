@@ -8,6 +8,8 @@ The core search is a short `search_faces` function: **detect → crop → embed 
 
 Green boxes indicate similarity above `MATCH_THRESHOLD`; gray boxes indicate scores below it. Scores are not identity probabilities. The annotated video is saved to `data/openvino_result.webm`. Simple face crops keep the lesson short, but real identity applications need alignment, threshold calibration, testing, and privacy safeguards.
 
+The final notebook section benchmarks both models separately on available CPU, GPU, and NPU devices. It shows batch-one latency and concurrent inference throughput in a table and charts. Compilation and preprocessing are excluded from timing. Unsupported model/device combinations are skipped with an explanation. `benchmark_utils.py` contains the timing helpers.
+
 #### Linux / macOS:
 ```bash
 ./launch.sh

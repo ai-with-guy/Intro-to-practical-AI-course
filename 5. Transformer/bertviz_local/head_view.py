@@ -210,9 +210,8 @@ def head_view(
                 <button id="generation-reset" type="button">Reset</button>
                 <label>Step <input id="generation-step" type="range" min="0" value="0"></label>
                 <div id="generation-status" aria-live="polite" style="margin:8px 0"></div>
-                <div>Decoder stream (start token + generated prefix):</div>
+                <div>Generated text</div>
                 <div id="generation-stream" style="max-height:64px;overflow:auto;padding:6px 0"></div>
-                <div id="generation-prediction" style="min-height:24px"></div>
             </section>
         """
     vis_html = f"""      
@@ -223,10 +222,6 @@ def head_view(
                 {select_html}
                 <label><input type="checkbox" id="animate-flow"> Animate flow</label>
             </span>
-            <div style="font-size:12px;color:#555;margin-top:6px">
-                Dots carry information from keys/values (right) to queries (left).
-                Stronger attention means brighter lines and dots.
-            </div>
             <div id='vis'></div>
         </div>
     """

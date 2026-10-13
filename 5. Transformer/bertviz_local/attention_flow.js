@@ -152,17 +152,12 @@
         const root = $(`#${config.rootDivId}`);
         const decoder = config.attention.find(d => d.name === 'Cross' || d.name === 'Decoder');
         const prefix = [decoder.left_text[0], ...params.generation_tokens.slice(0, config.generationStep)];
-        const added = params.generation_tokens[config.generationStep - 1];
         const stream = root.find('#generation-stream').empty();
         prefix.forEach((token, i) => $('<span />').text(token).css({
             display: 'inline-block', padding: '4px 7px', margin: '2px', borderRadius: '4px',
             background: i === prefix.length - 1 ? '#c9e3ff' : '#e3e8ef', fontFamily: 'monospace'
         }).appendTo(stream));
         root.find('#generation-status').text(`Generated ${config.generationStep}/${params.generation_tokens.length} tokens`);
-        root.find('#generation-prediction').text(config.generationStep === 0
-            ? 'The start token is ready. Next adds the first prediction.'
-            : generationFinished() ? `Added ${added}. End of recorded generation (EOS or token limit).`
-            : `Added ${added}. The extended prefix is ready to predict the next token.`);
         root.find('#generation-step').val(config.generationStep);
         root.find('#generation-next').prop('disabled', generationFinished());
         root.find('#generation-back').prop('disabled', config.generationStep === 0);
@@ -209,7 +204,9 @@
 
         // Draw squares at top of visualization, one for each head
         drawCheckboxes(0, svg, layerAttention);
-        const labels = attnData.name === 'Cross'
+        const labels = params.generation_tokens
+            ? (attnData.name === 'Cross' ? ['Decoder', 'Encoder'] : ['Tokens', 'Tokens'])
+            : attnData.name === 'Cross'
             ? ['Decoder queries (receive)', 'Encoder keys/values (send)']
             : ['Queries (receive)', 'Keys/values (send)'];
         labels.forEach((label, i) => svg.append('text')
