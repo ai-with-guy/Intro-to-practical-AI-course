@@ -59,7 +59,8 @@ QUESTIONS = [
     },
     {
         "question": "Q4. Only the `sex` column has missing values. Why might "
-                     "`dropna(subset=['sex'])` be better than plain `dropna()`?",
+                     "`dropna(subset=['sex'])` be better than plain `dropna()`?"
+                     "  (Assuming we are mostly looking at per column statistics.)",
         "choices": [
             "A) It's not better, they do the same thing",
             "B) It only removes rows missing sex, preserving rows complete in "
@@ -116,24 +117,24 @@ QUESTIONS = [
                         "single overall mean doesn't represent any real species well. A more "
                         "honest summary is penguins.groupby('species')['body_mass_g'].mean().",
     },
-    {
-        "question": "Q8. To show a general audience that the three penguin species are "
-                     "physically different, which plot is generally clearest, and why?",
-        "choices": [
-            "A) A box plot of a measurement grouped by species, since it shows medians "
-               "and spread at a glance without explaining density",
-            "B) A raw data table, since numbers are always clearer than charts",
-            "C) A pie chart of species counts, since it shows physical differences directly",
-            "D) A single histogram of all penguins combined, since more data is always better",
-        ],
-        "answer": "A) A box plot of a measurement grouped by species, since it shows medians "
-                   "and spread at a glance without explaining density",
-        "explanation": "A box plot grouped by species is usually clearest for a general, "
-                        "non-technical audience because it shows medians and spread directly, "
-                        "without requiring the viewer to understand density or bin width. "
-                        "Scatterplots are better for showing relationships between two "
-                        "measurements instead.",
-    },
+    # {
+    #     "question": "Q8. To show a general audience that the three penguin species are "
+    #                  "physically different, which plot is generally clearest, and why?",
+    #     "choices": [
+    #         "A) A box plot of a measurement grouped by species, since it shows medians "
+    #            "and spread at a glance without explaining density",
+    #         "B) A raw data table, since numbers are always clearer than charts",
+    #         "C) A pie chart of species counts, since it shows physical differences directly",
+    #         "D) A single histogram of all penguins combined, since more data is always better",
+    #     ],
+    #     "answer": "A) A box plot of a measurement grouped by species, since it shows medians "
+    #                "and spread at a glance without explaining density",
+    #     "explanation": "A box plot grouped by species is usually clearest for a general, "
+    #                     "non-technical audience because it shows medians and spread directly, "
+    #                     "without requiring the viewer to understand density or bin width. "
+    #                     "Scatterplots are better for showing relationships between two "
+    #                     "measurements instead.",
+    # },
 ]
 
 
