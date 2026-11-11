@@ -19,6 +19,10 @@ The notebook shows Hugging Face **tokenizer → `model.generate()` → decode**
 directly. There is no pipeline, chat server, built-in tool parser, or hidden
 output cleanup. `skip_special_tokens=False` keeps the model's boundary tokens
 visible. We supply the Qwen3 framing rather than expect it to be memorized.
+Native tool-call markers are control tokens, not ordinary prose; the notebook
+compares their IDs with our teaching delimiters and shows explicit stopping
+logic. It also shows Qwen3's thinking/non-thinking prompt prefixes: an empty
+reasoning block is prefilled for this exercise, not stripped from the output.
 
 ## Model and hardware
 
@@ -53,20 +57,11 @@ requires changing the chat framing and tokenizer assumptions. The source is
 ## Files worth keeping
 
 - `Building_a_Bash_Agent.ipynb`: the lesson, with exercise solutions included during development.
-- `agent_runtime.py`: supplied callable Git Bash runtime only.
-- `bash_agent.py`: separate reference parser, formatter, and loop.
-- `test_bash_agent.py`: offline protocol and real-Bash tests.
 - `workspace/`: tiny disposable dataset.
 - `launch.bat`, `launch.sh`, `pyproject.toml`, `uv.lock`: course-style environment.
 
-The obsolete sketch and unrelated Ollama/SQLite example have been removed.
-
-From the repository root, after launching once:
-
-```powershell
-Agents/.venv/Scripts/python.exe -m unittest discover -s Agents -v
-Agents/.venv/Scripts/python.exe Agents/bash_agent.py --workspace Agents/workspace "First run cat sales.csv, then calculate North units from the observed rows."
-```
+The notebook is self-contained, including the supplied Bash runtime, solutions,
+and scripted checks. No helper-module imports or separate test file are needed.
 
 ## Bash behavior and safety
 
