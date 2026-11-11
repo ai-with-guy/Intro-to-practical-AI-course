@@ -1,0 +1,3 @@
+This is a tiny, disposable dataset for the agent harness exercise.
+One row represents one sale. Units are item counts, not revenue.
+Use sales.csv as evidence; do not guess totals from this note.

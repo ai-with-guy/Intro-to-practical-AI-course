@@ -1,0 +1,36 @@
+[project]
+name = "agents-lesson"
+version = "0.1.0"
+description = "Build an agent harness directly from Hugging Face model outputs"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "jupyter>=1.1.1",
+    "ipykernel>=6,<8",
+    "transformers>=5,<6",
+    "ipywidgets>=8.1.5",
+]
+
+[project.optional-dependencies]
+cuda = ["torch>=2.6,<3"]
+xpu = ["torch>=2.6,<3"]
+
+[tool.uv]
+package = false
+index-strategy = "unsafe-best-match"
+conflicts = [[{ extra = "cuda" }, { extra = "xpu" }]]
+
+[tool.uv.sources]
+torch = [
+    { index = "pypi-torch", extra = "cuda" },
+    { index = "pytorch-xpu", extra = "xpu" },
+]
+
+[[tool.uv.index]]
+name = "pypi-torch"
+url = "https://pypi.org/simple"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-xpu"
+url = "https://download.pytorch.org/whl/xpu"
+# Also supplies torch's transitive triton-xpu dependency on Windows/Linux.
